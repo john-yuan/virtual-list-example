@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Virtual list</title>
+  <style>
+    .header,
+    .footer {
+      height: 300px;
+      line-height: 300px;
+      text-align: center;
+      background-color: #aaa;
+      color: #fff;
+      font-size: 48px;
+    }
+
+    .list {
+      position: relative;
+      margin-top: 24px;
+      margin-bottom: 24px;
+    }
+
+    .item {
+      position: absolute;
+      left: 0;
+      right: 0;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">Header</div>
+  <div class="list"></div>
+  <div class="footer">Footer</div>
+
+  <script>
+    var itemHeight = 50;
+    var listLength = 100000;
+    var totalHeight = itemHeight * listLength;
+    var list = document.querySelector('.list');
+
+    list.style.height = totalHeight + 'px';
+
+    var cache = [];
+
+    var renderItem = function (index) {
+      var node = document.createElement('div');
+      var bgColor = (index % 2) === 0 ? '#eee' : '#ccc';
+
+      node.className = "item";
+      node.style.top = index * itemHeight + 'px';
+      node.style.height = itemHeight + 'px';
+      node.style.lineHeight = itemHeight + 'px';
+      node.style.backgroundColor = bgColor;
+      node.textContent = "Item " + (index + 1);
+
+      return node;
+    };
+
+    var render = function () {
+      var rect = list.getBoundingClientRect();
+      var windowHeight = window.innerHeight;
+      var invisibleTop = 0;
+      var visibleHeight = 0;
+
+      if (rect.top <= 0) {
+        invisibleTop = -rect.top;
+        visibleHeight = Math.min(rect.bottom, windowHeight);
+      } else {
+        visibleHeight = Math.min(rect.bottom, windowHeight) - rect.top;
+      }
+
+      var startIndex = Math.floor(invisibleTop / itemHeight);
+      var endIndex = Math.floor((invisibleTop + visibleHeight) / itemHeight);
+
+      endIndex = Math.min(endIndex, listLength - 1);
+
+      var prerenderCount = 5;
+      startIndex = Math.max(0, startIndex - prerenderCount);
+      endIndex = Math.min(listLength - 1, endIndex + prerenderCount);
+      // The prerender above is optional, we use it to avoid white screen
+      // while scrolling fast.
+
+      var newCache = [];
+      var renderedIndex = [];
+
+      cache.forEach((item) => {
+        if (item.index >= startIndex && item.index <= endIndex) {
+          newCache.push(item);
+          renderedIndex.push(item.index);
+        } else if (item.node.parentNode) {
+          item.node.parentNode.removeChild(item.node);
+        }
+      });
+
+      for (let index = startIndex; index <= endIndex; index += 1) {
+        if (renderedIndex.indexOf(index) === -1) {
+          const node = renderItem(index);
+          list.appendChild(node);
+          newCache.push({ index, node });
+        }
+      }
+
+      cache = newCache;
+    };
+
+    window.addEventListener('load', render, false);
+    window.addEventListener('scroll', render, false);
+  </script>
+</body>
+</html>
