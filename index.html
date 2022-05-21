@@ -95,11 +95,11 @@
         }
       });
 
-      for (let index = startIndex; index <= endIndex; index += 1) {
+      for (var index = startIndex; index <= endIndex; index += 1) {
         if (renderedIndex.indexOf(index) === -1) {
-          const node = renderItem(index);
+          var node = renderItem(index);
           list.appendChild(node);
-          newCache.push({ index, node });
+          newCache.push({ index: index, node: node });
         }
       }
 
